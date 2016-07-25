@@ -1,3 +1,8 @@
+# todo
+*  写成package包，使用pip安装，提供系统指令
+
+---
+
 ###自动截图并上传到七牛的脚本
 ####依赖安装
 * 确保pngpaste工具存在，如果不存在，可以通过brew安装，如果没有brew，请google关键字mac+brew
