@@ -11,15 +11,25 @@ import commands
 from PIL import Image
 from hashlib import md5
 from qiniu import Auth, put_file, etag
+import yaml
+from os.path import expanduser,join
+from shutil import copyfile
+
+
+
+home = expanduser("~")
+with open(os.path.join(home,".qiniu.yml")) as f:
+    config = yaml.load(f)
+    ak = config["AK"]
+    sk = config["SK"]
+    domain = config["YOUR_DOAMIN"] # http://oav6fgfj1.bkt.clouddn.com
+    bucket = config["YOUR_BUCKET"]
+    saveas = config["PATH_SAVEAS"]
 
 pngpaste = '/usr/local/bin/pngpaste'
 if len(sys.argv) == 2:
     pngpaste = sys.argv[1]
 
-ak = YOUR_AK 
-sk = YOUR_SK
-domain = YOUR_DOAMIN # 例如:'http://7xpx6h.com1.z0.glb.clouddn.com'
-bucket = YOUR_BUCKET # 空间名称
 q = Auth(ak, sk)
 
 # check pngpaste is exists
@@ -40,7 +50,15 @@ def image_similar(image1, image2):
 
 
 def upload_file(upload_file_name, temp):
-    key = md5(str(time.time())+''.join(random.sample(string.letters, 12))).hexdigest()
+    # upload_file_name就是文件名
+    # 复制到 saveas目录下
+    #  先保存到固定文件夹,纳入git管理：saveas
+    #key = md5(str(time.time())+''.join(random.sample(string.letters, 12))).hexdigest()
+    # key 请求用户输入
+    print u"请输入图片名: ",
+    pic_name = raw_input()
+    key = pic_name+".png"
+    copyfile(upload_file_name,join(saveas,key))
     mime_type = 'image/png'
     token = q.upload_token(bucket, key)
     ret, info = put_file(token, key, upload_file_name, mime_type=mime_type, check_crc=True)
@@ -50,10 +68,14 @@ def upload_file(upload_file_name, temp):
     os.rename(upload_file_name, upload_file_name+'.old')
     return domain+'/'+key
 
-file_name = 'test.png'
+file_name = 'test.png' #临时存在当前文件夹下
+
+# todo截图之后，要求用户输入名字
+# todo截图之后，默认保证到某个目录，允许创建子目录
+
 while True:
     time.sleep(1)
-    print 'check..................'
+    print u'正在等待截图..................'
     status, output = commands.getstatusoutput(pngpaste+' '+file_name)
     if output.find('No image data found on the clipboard') > 0:
         continue
